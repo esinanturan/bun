@@ -161,7 +161,7 @@ const CppWebSocket = opaque {
         defer loop.exit();
         WebSocket__didAbruptClose(this, reason);
     }
-    pub fn didClose(this: *CppWebSocket, code: u16, reason: *const bun.String) void {
+    pub fn didClose(this: *CppWebSocket, code: u16, reason: *bun.String) void {
         const loop = JSC.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
@@ -226,7 +226,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
         pub const name = if (ssl) "WebSocketHTTPSClient" else "WebSocketHTTPClient";
 
         pub const shim = JSC.Shimmer("Bun", name, @This());
-        pub usingnamespace bun.NewRefCounted(@This(), deinit);
+        pub usingnamespace bun.NewRefCounted(@This(), deinit, null);
 
         const HTTPClient = @This();
         pub fn register(_: *JSC.JSGlobalObject, _: *anyopaque, ctx: *uws.SocketContext) callconv(.C) void {
@@ -425,8 +425,8 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                         this.fail(ErrorCode.tls_handshake_failed);
                         return;
                     }
-                    const ssl_ptr = @as(*BoringSSL.SSL, @ptrCast(socket.getNativeHandle()));
-                    if (BoringSSL.SSL_get_servername(ssl_ptr, 0)) |servername| {
+                    const ssl_ptr = @as(*BoringSSL.c.SSL, @ptrCast(socket.getNativeHandle()));
+                    if (BoringSSL.c.SSL_get_servername(ssl_ptr, 0)) |servername| {
                         const hostname = servername[0..bun.len(servername)];
                         if (!BoringSSL.checkServerIdentity(ssl_ptr, hostname)) {
                             this.fail(ErrorCode.tls_handshake_failed);
@@ -713,20 +713,18 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
         });
 
         comptime {
-            if (!JSC.is_bindgen) {
-                @export(connect, .{
-                    .name = Export[0].symbol_name,
-                });
-                @export(cancel, .{
-                    .name = Export[1].symbol_name,
-                });
-                @export(register, .{
-                    .name = Export[2].symbol_name,
-                });
-                @export(memoryCost, .{
-                    .name = Export[3].symbol_name,
-                });
-            }
+            @export(&connect, .{
+                .name = Export[0].symbol_name,
+            });
+            @export(&cancel, .{
+                .name = Export[1].symbol_name,
+            });
+            @export(&register, .{
+                .name = Export[2].symbol_name,
+            });
+            @export(&memoryCost, .{
+                .name = Export[3].symbol_name,
+            });
         }
     };
 }
@@ -1034,7 +1032,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
 
         const WebSocket = @This();
 
-        pub usingnamespace bun.NewRefCounted(@This(), deinit);
+        pub usingnamespace bun.NewRefCounted(@This(), deinit, null);
         pub fn register(global: *JSC.JSGlobalObject, loop_: *anyopaque, ctx_: *anyopaque) callconv(.C) void {
             const vm = global.bunVM();
             const loop = @as(*uws.Loop, @ptrCast(@alignCast(loop_)));
@@ -1115,8 +1113,8 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
 
                 if (authorized) {
                     if (reject_unauthorized) {
-                        const ssl_ptr = @as(*BoringSSL.SSL, @ptrCast(socket.getNativeHandle()));
-                        if (BoringSSL.SSL_get_servername(ssl_ptr, 0)) |servername| {
+                        const ssl_ptr = @as(*BoringSSL.c.SSL, @ptrCast(socket.getNativeHandle()));
+                        if (BoringSSL.c.SSL_get_servername(ssl_ptr, 0)) |servername| {
                             const hostname = servername[0..bun.len(servername)];
                             if (!BoringSSL.checkServerIdentity(ssl_ptr, hostname)) {
                                 this.outgoing_websocket = null;
@@ -1846,7 +1844,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
             this.deref();
         }
 
-        fn dispatchClose(this: *WebSocket, code: u16, reason: *const bun.String) void {
+        fn dispatchClose(this: *WebSocket, code: u16, reason: *bun.String) void {
             var out = this.outgoing_websocket orelse return;
             this.poll_ref.unref(this.globalThis.bunVM());
             JSC.markBinding(@src());
@@ -2009,16 +2007,14 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         });
 
         comptime {
-            if (!JSC.is_bindgen) {
-                @export(writeBinaryData, .{ .name = Export[0].symbol_name });
-                @export(writeString, .{ .name = Export[1].symbol_name });
-                @export(close, .{ .name = Export[2].symbol_name });
-                @export(cancel, .{ .name = Export[3].symbol_name });
-                @export(register, .{ .name = Export[4].symbol_name });
-                @export(init, .{ .name = Export[5].symbol_name });
-                @export(finalize, .{ .name = Export[6].symbol_name });
-                @export(memoryCost, .{ .name = Export[7].symbol_name });
-            }
+            @export(&writeBinaryData, .{ .name = Export[0].symbol_name });
+            @export(&writeString, .{ .name = Export[1].symbol_name });
+            @export(&close, .{ .name = Export[2].symbol_name });
+            @export(&cancel, .{ .name = Export[3].symbol_name });
+            @export(&register, .{ .name = Export[4].symbol_name });
+            @export(&init, .{ .name = Export[5].symbol_name });
+            @export(&finalize, .{ .name = Export[6].symbol_name });
+            @export(&memoryCost, .{ .name = Export[7].symbol_name });
         }
     };
 }

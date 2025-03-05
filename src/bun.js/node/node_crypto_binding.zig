@@ -6,7 +6,7 @@ const string = bun.string;
 const Output = bun.Output;
 const ZigString = JSC.ZigString;
 const Crypto = JSC.API.Bun.Crypto;
-const BoringSSL = bun.BoringSSL;
+const BoringSSL = bun.BoringSSL.c;
 const assert = bun.assert;
 const EVP = Crypto.EVP;
 const PBKDF2 = EVP.PBKDF2;
@@ -40,7 +40,7 @@ fn randomInt(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSE
 }
 
 fn pbkdf2(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
-    const arguments = callframe.arguments_old(5);
+    const arguments = callframe.arguments_old(6);
 
     const data = try PBKDF2.fromJS(globalThis, arguments.slice(), true);
 
